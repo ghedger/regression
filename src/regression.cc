@@ -46,11 +46,19 @@ void getSums(
   }
 }
 
-double getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *b)
+// getLeastSquares
+//
+// Get ordinary least squares regression on a set of { x, y } data
+//
+// Entry: pointer to data
+//        # of datum
+//        pointer to a result
+//        pointer to b result
+void getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *b)
 {
   double sigmaX = 0.0, sigmaY = 0.0;
   double sigmaXY = 0.0;
-  double sigmaXSquared = 0.0, sigmaYSquared = 0.0;
+  double sigmaXSquared = 0.0;
   // Sum x and y and their squares
   // (TODO: We don't strictly need y^2; optimize out later)
   getSums( data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY );
@@ -62,7 +70,7 @@ double getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *
   *b /= (size * sigmaXSquared) - (sigmaX * sigmaX);
 }
 
-#define DATA_SIZE 6
+static const int DATA_SIZE = 6;
 int main()
 {
   hedger::DataPoint data[DATA_SIZE] =
