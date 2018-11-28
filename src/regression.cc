@@ -60,10 +60,18 @@ void getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *b)
   double sigmaXY = 0.0;
   double sigmaXSquared = 0.0;
   // Sum x and y and their squares
-  // (TODO: We don't strictly need y^2; optimize out later)
   getSums( data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY );
 
   // Now calculate a and b per standard linear regression equation
+  //
+  //      (sigma y)(sigma x^2) - (sigma x)(sigma xy)
+  // a =  ------------------------------------------
+  //          n(sigma x^2) - (sigma x)^2
+  //
+  //      n(sigma xy) - (sigma x)(sigma y)
+  // b =  --------------------------------
+  //           n(sigma x^2) - (sigma x)^2
+  //
   *a = (sigmaY * sigmaXSquared) - (sigmaX * sigmaXY);
   *a /= (size * sigmaXSquared) - (sigmaX * sigmaX);
   *b = (size * sigmaXY) - (sigmaX * sigmaY);
