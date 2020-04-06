@@ -15,82 +15,93 @@
 // You should have received a copy of the GNU General Public License
 // along with sortbench.  If not, see <https://www.gnu.org/licenses/>.
 //
+// Copyright (C) 2018 Greg Hedger
+//
 
 #include <stdio.h>
 
 namespace hedger {
-struct DataPoint {
-  double x;
-  double y;
-};
+  struct DataPoint {
+    double x;
+    double y;
+  };
+
+  void getSums(
+      hedger::DataPoint *data,
+      size_t size,
+      double *x,
+      double *y,
+      double *xSquared,
+      double *xy
+      )
+  {
+    *x = 0.0;
+    *y = 0.0;
+    *xSquared = 0.0;
+    *xy = 0.0;
+    for( size_t i = 0; i < size; i++ ) {
+      *x += data[i].x;
+      *y += data[i].y;
+      *xSquared += data[i].x * data[i].x;
+      *xy += data[i].x * data[i].y;
+    }
+  }
+
+  // getLeastSquares
+  //
+  // Get ordinary least squares regression on a set of { x, y } data
+  //
+  // Entry: pointer to data
+  //        # of datum
+  //        pointer to a result
+  //        pointer to b result
+  void getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *b)
+  {
+    double sigmaX = 0.0, sigmaY = 0.0;
+    double sigmaXY = 0.0;
+    double sigmaXSquared = 0.0;
+    // Sum x and y and their squares
+    getSums( data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY );
+
+    // Now calculate a and b per standard linear regression equation
+    //
+    //      (sigma y)(sigma x^2) - (sigma x)(sigma xy)
+    // a =  ------------------------------------------
+    //          n(sigma x^2) - (sigma x)^2
+    //
+    //      n(sigma xy) - (sigma x)(sigma y)
+    // b =  --------------------------------
+    //           n(sigma x^2) - (sigma x)^2
+    //
+    *a = (sigmaY * sigmaXSquared) - (sigmaX * sigmaXY);
+    *a /= (size * sigmaXSquared) - (sigmaX * sigmaX);
+    *b = (size * sigmaXY) - (sigmaX * sigmaY);
+    *b /= (size * sigmaXSquared) - (sigmaX * sigmaX);
+  }
 } // namespace hedger
 
-void getSums(
-  hedger::DataPoint *data,
-  size_t size,
-  double *x,
-  double *y,
-  double *xSquared,
-  double *xy
-)
-{
-  *x = 0.0;
-  *y = 0.0;
-  *xSquared = 0.0;
-  *xy = 0.0;
-  for( size_t i = 0; i < size; i++ ) {
-    *x += data[i].x;
-    *y += data[i].y;
-    *xSquared += data[i].x * data[i].x;
-    *xy += data[i].x * data[i].y;
-  }
-}
-
-// getLeastSquares
-//
-// Get ordinary least squares regression on a set of { x, y } data
-//
-// Entry: pointer to data
-//        # of datum
-//        pointer to a result
-//        pointer to b result
-void getLeastSquares(hedger::DataPoint *data, size_t size, double *a, double *b)
-{
-  double sigmaX = 0.0, sigmaY = 0.0;
-  double sigmaXY = 0.0;
-  double sigmaXSquared = 0.0;
-  // Sum x and y and their squares
-  getSums( data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY );
-
-  // Now calculate a and b per standard linear regression equation
-  //
-  //      (sigma y)(sigma x^2) - (sigma x)(sigma xy)
-  // a =  ------------------------------------------
-  //          n(sigma x^2) - (sigma x)^2
-  //
-  //      n(sigma xy) - (sigma x)(sigma y)
-  // b =  --------------------------------
-  //           n(sigma x^2) - (sigma x)^2
-  //
-  *a = (sigmaY * sigmaXSquared) - (sigmaX * sigmaXY);
-  *a /= (size * sigmaXSquared) - (sigmaX * sigmaX);
-  *b = (size * sigmaXY) - (sigmaX * sigmaY);
-  *b /= (size * sigmaXSquared) - (sigmaX * sigmaX);
-}
-
 static const int DATA_SIZE = 6;
-int main()
+int main(int argc, const char *argv[])
 {
-  hedger::DataPoint data[DATA_SIZE] =
-  { { 43.0, 99.0 },
-    { 21.0, 65.0 },
-    { 25.0, 79.0 },
-    { 42.0, 75.0 },
-    { 57.0, 87.0 },
-    { 59.0, 81.0 } };
+  using namespace hedger;
 
+  // Pull in arguments from command line
+  int data_size = (argc - 1) / 2;
+  DataPoint *data = new DataPoint[ data_size ];
+  double v;
+  for (int i = 0; i < data_size; i++) {
+    sscanf(argv[ 1 + i * 2 ], "%lf", &v);
+    data[ i ].x = v;
+    sscanf(argv[ 1 + i * 2 + 1 ], "%lf", &v);
+    data[ i ].y = v;
+  }
+
+  // Get the Y starting offset ("x") and rise-over-run ("y")
   double a = 0.0, b = 0.0;
-  getLeastSquares( data, DATA_SIZE, &a, &b );
+  getLeastSquares( data, data_size, &a, &b );
   printf("%lf, %lf\n", a, b);
+
+  // Free resources and exit
+  delete data;
   return 0;
 }
