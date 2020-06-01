@@ -26,6 +26,13 @@ namespace hedger {
     double y;
   };
 
+  void printUsage() {
+    printf("regression\n");
+    printf("Copyright (C) 2020 Greg Hedger\n");
+    printf("Usage:\n");
+    printf(" regrssion [x1] [y1] [x2] [y2] ...\n");
+  }
+
   void getSums(
       hedger::DataPoint *data,
       size_t size,
@@ -84,6 +91,10 @@ static const int DATA_SIZE = 6;
 int main(int argc, const char *argv[])
 {
   using namespace hedger;
+
+  if (argc < 2) {
+    printUsage();
+  }
 
   // Pull in arguments from command line
   int data_size = (argc - 1) / 2;
