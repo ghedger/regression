@@ -94,6 +94,7 @@ int main(int argc, const char *argv[])
 
   if (argc < 2) {
     printUsage();
+    return 1;
   }
 
   // Pull in arguments from command line
