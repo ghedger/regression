@@ -13,9 +13,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with sortbench.  If not, see <https://www.gnu.org/licenses/>.
+// along with regression.  If not, see <https://www.gnu.org/licenses/>.
 //
-// Copyright (C) 2018 Greg Hedger
+// Copyright (C) 2020 Greg Hedger
 //
 
 #include <stdio.h>
