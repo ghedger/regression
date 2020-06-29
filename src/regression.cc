@@ -28,11 +28,20 @@ namespace hedger {
 
   void printUsage() {
     printf("regression\n");
+    printf("Calculates Y baseline b and slope m from set of {x,y} points.\n");
     printf("Copyright (C) 2020 Greg Hedger\n");
     printf("Usage:\n");
-    printf(" regrssion [x1] [y1] [x2] [y2] ...\n");
+    printf(" regression [x₁] [y₁] ... [xₙ] [yₙ]\n");
   }
 
+  // getSums
+  // Get requisite sums (sigmas) for the best fit calculations
+  // Entry: data array of {x,y} points
+  //        size of array
+  //        pointer to destination x variable
+  //        pointer to destination y variable
+  //        pointer to sum of x²
+  //        pointer to sum of xy
   void getSums(
       hedger::DataPoint *data,
       size_t size,
@@ -54,9 +63,61 @@ namespace hedger {
     }
   }
 
+  // getMean
+  // Get x mean (x̄)
+  // Entry: data array of {x,y} points
+  //        size of array
+  double getMean(
+      hedger::DataPoint *data,
+      size_t size
+      )
+  {
+    double sum = 0.0;
+    for( size_t i = 0; i < size; i++ ) {
+      sum += data[i].x;
+    }
+    sum /= size;
+    return sum;
+  }
+
+  // getBestFit
+  //
+  // Get the best slope m and baseline b from a set of {x,y} points.
+  //
+  // Entry: pointer to data
+  //        # of datum
+  //        pointer to baseline b result
+  //        pointer to slope m result
+  void getBestFit(hedger::DataPoint *data, size_t size, double *b, double *m)
+  {
+    double sigmaX = 0.0, sigmaY = 0.0;
+    double sigmaXY = 0.0;
+    double sigmaXSquared = 0.0;
+    // Sum x and y and their squares
+    getSums(data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY);
+
+    //
+    //         N Σ(xy) − Σx Σy
+    //    m = -----------------
+    //         N Σ(x²) − (Σx)²
+    //
+    //         Σy − m Σx
+    //    b = -----------
+    //            N
+    //
+    //
+    //    y = mx + b
+    //
+    *m = size * (sigmaXY) - (sigmaX * sigmaY);
+    *m /= (size * sigmaXSquared) - sigmaX * sigmaX;
+    *b = sigmaY - *m * sigmaX;
+    *b /= size;
+  }
+
   // getLeastSquares
   //
   // Get ordinary least squares regression on a set of { x, y } data
+  // (slight rearrangement of getBestFit equation)
   //
   // Entry: pointer to data
   //        # of datum
@@ -68,7 +129,7 @@ namespace hedger {
     double sigmaXY = 0.0;
     double sigmaXSquared = 0.0;
     // Sum x and y and their squares
-    getSums( data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY );
+    getSums(data, size, &sigmaX, &sigmaY, &sigmaXSquared, &sigmaXY);
 
     // Now calculate a and b per standard linear regression equation
     //
@@ -92,7 +153,7 @@ int main(int argc, const char *argv[])
 {
   using namespace hedger;
 
-  if (argc < 2) {
+  if (argc < 5) {
     printUsage();
     return 1;
   }
@@ -108,10 +169,21 @@ int main(int argc, const char *argv[])
     data[ i ].y = v;
   }
 
-  // Get the Y starting offset ("x") and rise-over-run ("y")
-  double a = 0.0, b = 0.0;
-  getLeastSquares( data, data_size, &a, &b );
-  printf("%lf, %lf\n", a, b);
+  // Warn if odd # of arguments
+  if (data_size * 2 < (argc - 1)) {
+    printf("\nWARNING: Ignoring last param!");
+  }
+
+  // Get the Y baseline ("b") and slope ("m")
+  double m = 0.0, b = 0.0;
+  getBestFit( data, data_size, &b, &m );
+  printf("Best fit:\n");
+  printf("b=%lf\nm=%lf\n", b, m);
+
+  double xbar = getMean( data, data_size );
+
+  // Print y at center point x-bar
+  printf("\ny=%lf at x=x̄=%lf\n", m*xbar + b, xbar);
 
   // Free resources and exit
   delete data;
